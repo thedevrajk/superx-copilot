@@ -2,15 +2,23 @@ importScripts("reply-brain.js");
 
 const brain = globalThis.SuperXBrain;
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (!message || message.type !== "GENERATE_REPLIES") return;
-  generate(message.payload)
-    .then((result) => sendResponse({ ok: true, ...result }))
-    .catch((error) => {
-      const text = error instanceof Error ? error.message : "API request failed.";
-      sendResponse({ ok: false, error: text });
-    });
-  return true;
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (!message) return;
+  if (message.type === "GENERATE_REPLIES") {
+    generate(message.payload)
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => {
+        const text = error instanceof Error ? error.message : "API request failed.";
+        sendResponse({ ok: false, error: text });
+      });
+    return true;
+  }
+  if (message.type === "OPEN_POST" && sender.tab?.id) {
+    chrome.sidePanel.open({ tabId: sender.tab.id }).catch(() => {});
+    chrome.runtime.sendMessage(message).catch(() => {});
+  }
 });
 
 async function generate(payload) {
@@ -57,6 +65,8 @@ async function generate(payload) {
       : await callGemini({ baseUrl, model, auth, apiKey, prompt, image, jsonMode, temperature: Number(payload?.temperature) || 0.7 });
 
   if (!raw.trim()) throw new Error("API returned nothing.");
+
+  await trackUsage(raw.length + prompt.length);
 
   return {
     options: brain.draftsFromModel(raw, ids, read, Number(payload?.salt) || 1),
@@ -138,6 +148,17 @@ async function callOpenAI({ baseUrl, model, auth, apiKey, prompt, image, jsonMod
     throw new Error(String(message).replace(apiKey, "…"));
   }
   return body?.choices?.[0]?.message?.content || "";
+}
+
+async function trackUsage(approxTokens) {
+  const day = new Date().toISOString().slice(0, 10);
+  const stored = await chrome.storage.local.get(["usage"]);
+  const usage = stored.usage || {};
+  const today = usage[day] || { requests: 0, tokens: 0 };
+  today.requests += 1;
+  today.tokens += Math.round(approxTokens / 4);
+  usage[day] = today;
+  await chrome.storage.local.set({ usage });
 }
 
 async function maybeImage(urls) {
