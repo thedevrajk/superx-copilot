@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SuperX Copilot</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0c0c0d;
+        --card: #141416;
+        --fg: #f2f2f3;
+        --muted: #a1a1aa;
+        --faint: #71717a;
+        --border: #2c2c31;
+        --danger: #e5484d;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        width: 420px;
+        background: var(--bg);
+        color: var(--fg);
+        font: 400 14px/1.45 ui-sans-serif, system-ui, sans-serif;
+      }
+      main { padding: 16px; }
+      h1 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
+      p { margin: 6px 0 0; color: var(--faint); font-size: 12px; line-height: 1.45; }
+      label { display: block; margin: 14px 0 6px; color: var(--muted); font-size: 13px; }
+      input, textarea, select {
+        width: 100%;
+        border: 1px solid var(--border);
+        background: var(--card);
+        color: var(--fg);
+        border-radius: 8px;
+        font: inherit;
+      }
+      input, select { height: 40px; padding: 0 12px; font-family: ui-monospace, menlo, consolas, monospace; font-size: 12px; }
+      select { font-family: ui-sans-serif, system-ui, sans-serif; }
+      textarea { min-height: 72px; padding: 10px 12px; resize: vertical; font-family: ui-sans-serif, system-ui, sans-serif; }
+      input:focus, textarea:focus, select:focus { outline: 2px solid color-mix(in srgb, var(--fg) 40%, transparent); outline-offset: 1px; }
+      .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+      .check { display: flex; align-items: center; gap: 8px; margin-top: 14px; color: var(--muted); font-size: 13px; }
+      .check input { width: auto; height: auto; }
+      button {
+        min-height: 40px;
+        border-radius: 8px;
+        border: 0;
+        padding: 0 16px;
+        font: 600 13px/1 ui-sans-serif, system-ui, sans-serif;
+        cursor: pointer;
+      }
+      button:active { transform: scale(0.98); }
+      #save { background: var(--fg); color: #141416; }
+      #clear { background: transparent; color: var(--danger); padding: 0; }
+      #error { min-height: 1em; margin: 6px 0 0; color: var(--danger); font-size: 12px; }
+      #status { color: var(--muted); font-size: 12px; }
+      h2 { margin: 22px 0 8px; font-size: 13px; font-weight: 600; }
+      ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+      li strong { display: block; font-size: 13px; font-weight: 500; }
+      li span { display: block; color: var(--faint); font-size: 12px; }
+      #taste { margin-top: 8px; color: var(--muted); font-size: 12px; }
+      .hint { margin-top: 4px; color: var(--faint); font-size: 11px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>SuperX Copilot</h1>
+      <p>Blank key uses the on-device reply brain. Key stays in Chrome.</p>
+
+      <div id="update-box" style="margin:16px 0;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--card);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div>
+            <strong style="font-size:13px;">Updates</strong>
+            <p id="update-status" style="margin:4px 0 0;">Checking…</p>
+          </div>
+          <button id="check-update" type="button" style="background:transparent;color:var(--fg);border:1px solid var(--border);">Check</button>
+        </div>
+        <p id="update-action" style="margin:8px 0 0;" hidden></p>
+      </div>
+
+      <label for="preset">Preset</label>
+      <select id="preset">
+        <option value="gemini">Gemini</option>
+        <option value="deepseek">DeepSeek</option>
+        <option value="openrouter">OpenRouter</option>
+        <option value="groq">Groq</option>
+        <option value="custom">Custom</option>
+      </select>
+      <p class="hint">Choosing a preset fills the fields. You can still edit them.</p>
+
+      <label for="baseUrl">Base URL</label>
+      <input id="baseUrl" type="text" spellcheck="false" placeholder="https://api.example.com/v1" />
+
+      <label for="model">Model</label>
+      <input id="model" type="text" spellcheck="false" placeholder="model-id" />
+
+      <label for="format">Request format</label>
+      <select id="format">
+        <option value="openai">OpenAI chat completions</option>
+        <option value="gemini">Gemini generateContent</option>
+      </select>
+
+      <label for="auth">Auth</label>
+      <select id="auth">
+        <option value="bearer">Bearer token in header</option>
+        <option value="query">Key as query param</option>
+      </select>
+
+      <label for="key">API key</label>
+      <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="Optional" />
+
+      <label class="check">
+        <input id="jsonMode" type="checkbox" checked />
+        Force JSON response
+      </label>
+
+      <p id="error"></p>
+
+      <label for="notes">Extra voice notes</label>
+      <textarea id="notes" placeholder="Locked reply rules stay on."></textarea>
+
+      <label for="updateUrl">Update check URL (optional)</label>
+      <input id="updateUrl" type="text" spellcheck="false" placeholder="https://…/version.json" />
+      <p class="hint">JSON with { "version": "1.2.0", "url": "https://…/superx-copilot.zip" }</p>
+
+      <div class="row">
+        <button id="clear" type="button">Clear taste</button>
+        <button id="save" type="button">Save</button>
+      </div>
+      <p id="status"></p>
+
+      <h2>Reply formats</h2>
+      <p>Not post formats. A reply adds one missing detail.</p>
+      <ul id="formats"></ul>
+      <div id="taste"></div>
+    </main>
+    <script src="reply-brain.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>
