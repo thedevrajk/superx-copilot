@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SuperX Copilot</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0c0c0d;
+        --surface: #141416;
+        --elevated: #1c1c1f;
+        --fg: #f2f2f3;
+        --muted: #a1a1aa;
+        --faint: #71717a;
+        --border: #2c2c31;
+        --accent: #e7e9ea;
+        --warn: #d6a24e;
+        --bad: #e5484d;
+        --ok: #3ecf8e;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--fg);
+        font: 400 14px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        padding: 16px 16px 12px;
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+      }
+      h1 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
+      .meta { margin-top: 2px; color: var(--faint); font-size: 12px; }
+      main { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+      section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+      }
+      h2 { margin: 0 0 8px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+      .bar-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+      .bar {
+        height: 6px;
+        background: var(--elevated);
+        border-radius: 999px;
+        overflow: hidden;
+        margin-bottom: 10px;
+      }
+      .bar > span {
+        display: block;
+        height: 100%;
+        background: var(--accent);
+        width: 0%;
+        border-radius: inherit;
+      }
+      .bar.warn > span { background: var(--warn); }
+      .bar.bad > span { background: var(--bad); }
+      label { display: block; margin: 0 0 6px; color: var(--muted); font-size: 12px; }
+      textarea, input {
+        width: 100%;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--fg);
+        border-radius: 8px;
+        font: inherit;
+        padding: 8px 10px;
+      }
+      textarea { min-height: 64px; resize: vertical; }
+      textarea:focus, input:focus { outline: 2px solid color-mix(in srgb, var(--fg) 30%, transparent); outline-offset: 1px; }
+      .empty {
+        text-align: center;
+        color: var(--faint);
+        font-size: 13px;
+        padding: 24px 8px;
+      }
+      .card {
+        border: 1px solid var(--border);
+        background: var(--bg);
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        cursor: pointer;
+      }
+      .card.active { border-color: color-mix(in srgb, var(--fg) 40%, transparent); }
+      .label { font-size: 12px; color: var(--faint); }
+      .body { margin-top: 4px; font-size: 14px; line-height: 1.45; }
+      .actions { display: flex; gap: 8px; }
+      button {
+        min-height: 36px;
+        border-radius: 8px;
+        border: 0;
+        padding: 0 14px;
+        font: 600 13px/1 ui-sans-serif, system-ui, sans-serif;
+        cursor: pointer;
+      }
+      button:active { transform: scale(0.98); }
+      #insert { flex: 1; background: var(--fg); color: #141416; }
+      #reroll, #settings { background: transparent; color: var(--fg); border: 1px solid var(--border); }
+      button:disabled { opacity: 0.4; cursor: default; }
+      .count { font-size: 12px; color: var(--faint); margin-top: 4px; }
+      .count.warn { color: var(--warn); }
+      .count.bad { color: var(--bad); }
+      footer { padding: 0 16px 16px; }
+      a { color: var(--muted); font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>SuperX Copilot</h1>
+      <div class="meta" id="source">Waiting for a post</div>
+    </header>
+    <main>
+      <section>
+        <h2>Today</h2>
+        <div class="bar-row"><span>Requests</span><span id="req-label">0 / 1000</span></div>
+        <div class="bar" id="req-bar"><span></span></div>
+        <div class="bar-row"><span>Tokens</span><span id="tok-label">0 / 200k</span></div>
+        <div class="bar" id="tok-bar"><span></span></div>
+      </section>
+      <section>
+        <h2>Custom prompt</h2>
+        <textarea id="custom" placeholder="Extra instructions for this reply. Locked rails stay on."></textarea>
+      </section>
+      <section id="drafts">
+        <div class="empty" id="empty">Click the draft button on a post to load it here.</div>
+        <div id="cards"></div>
+        <textarea id="scratch" placeholder="Edit the line before it goes in." hidden></textarea>
+        <div class="count" id="count" hidden></div>
+        <div class="actions" id="actions" hidden>
+          <button id="reroll" type="button">Reroll</button>
+          <button id="insert" type="button">Insert reply</button>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <a href="options.html" id="settings-link">Settings</a>
+    </footer>
+    <script src="reply-brain.js"></script>
+    <script src="sidepanel.js"></script>
+  </body>
+</html>
