@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "SuperX Copilot",
+  "version": "1.2.0",
+  "description": "Reply drafts for X. Reads the post, picks a reply format, and never presses Reply.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://*/*",
+    "https://pbs.twimg.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["reply-brain.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options.html",
+  "action": {
+    "default_title": "SuperX Copilot",
+    "default_popup": "options.html"
+  }
+}
