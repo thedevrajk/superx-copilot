@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "SuperX Copilot",
-  "version": "1.3.0",
-  "description": "Reply drafts for X in the side panel. Reads the post, picks a reply format, and never presses Reply.",
+  "version": "1.4.0",
+  "description": "Reply drafts for X in the side panel. Reads the post, never invents a line, never presses Reply.",
   "permissions": ["storage", "sidePanel", "activeTab"],
   "host_permissions": [
     "https://*/*",
@@ -23,7 +23,6 @@
   },
   "options_page": "options.html",
   "action": {
-    "default_title": "SuperX Copilot",
-    "default_icon": {}
+    "default_title": "SuperX Copilot"
   }
 }

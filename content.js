@@ -48,9 +48,9 @@
         event.stopPropagation();
         const article = bar.closest("article");
         if (!article) return;
-        chrome.runtime.sendMessage({
-          type: "OPEN_POST",
-          payload: extract(article),
+        chrome.runtime.sendMessage({ type: "OPEN_POST", payload: extract(article) }, (response) => {
+          const failed = chrome.runtime.lastError || !response?.ok;
+          if (failed) toast(response?.error || "Click the SuperX icon. This post is loaded.");
         });
       });
       bar.append(button);
@@ -67,6 +67,31 @@
       navigator.clipboard.writeText(message.text);
     }
   });
+
+  function toast(text) {
+    let el = document.getElementById("superx-toast");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "superx-toast";
+      el.style.cssText = [
+        "position:fixed",
+        "z-index:2147483646",
+        "left:16px",
+        "bottom:16px",
+        "max-width:280px",
+        "padding:12px 14px",
+        "background:#0b0b0b",
+        "color:#f4f4f1",
+        "border:1px solid #2a2a2a",
+        "border-radius:8px",
+        "font:500 12px/1.4 ui-sans-serif,system-ui,sans-serif",
+      ].join(";");
+      document.documentElement.append(el);
+    }
+    el.textContent = text;
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => el.remove(), 4200);
+  }
 
   function extract(article) {
     const blocks = Array.from(article.querySelectorAll('[data-testid="tweetText"]'))
