@@ -4,134 +4,145 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>SuperX Copilot</title>
+    <link rel="stylesheet" href="https://fonts.bunny.net/css?family=geist:400,500,600" />
     <style>
       :root {
         color-scheme: dark;
-        --bg: #0c0c0d;
-        --card: #141416;
-        --fg: #f2f2f3;
-        --muted: #a1a1aa;
-        --faint: #71717a;
-        --border: #2c2c31;
-        --danger: #e5484d;
+        --bg: #141414;
+        --card: #0b0b0b;
+        --fg: #f4f4f1;
+        --muted: #8d8d88;
+        --faint: #5c5c58;
+        --line: #2a2a2a;
+        --lime: #d6ef6a;
+        --ink: #14160c;
+        --bad: #e25b4a;
       }
       * { box-sizing: border-box; }
       body {
-        margin: 0;
-        width: 420px;
-        background: var(--bg);
-        color: var(--fg);
-        font: 400 14px/1.45 ui-sans-serif, system-ui, sans-serif;
+        margin: 0; min-height: 100vh; background: var(--bg); color: var(--fg);
+        font: 400 13px/1.4 "Geist", ui-sans-serif, system-ui, sans-serif;
       }
-      main { padding: 16px; }
-      h1 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
-      p { margin: 6px 0 0; color: var(--faint); font-size: 12px; line-height: 1.45; }
-      label { display: block; margin: 14px 0 6px; color: var(--muted); font-size: 13px; }
+      main {
+        width: min(380px, calc(100% - 32px)); margin: 28px auto; background: var(--card);
+        border: 1px solid var(--line); border-radius: 10px; padding: 18px 18px 20px;
+      }
+      header { display: flex; justify-content: space-between; align-items: center; }
+      h1 { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; }
+      p { margin: 8px 0 0; color: var(--faint); font-size: 12px; line-height: 1.45; }
+      .k { color: var(--faint); font-size: 10px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; }
+      .field {
+        display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end;
+        border-bottom: 1px solid var(--line); padding: 12px 0 8px;
+      }
+      .field label { margin: 0; }
       input, textarea, select {
-        width: 100%;
-        border: 1px solid var(--border);
-        background: var(--card);
-        color: var(--fg);
-        border-radius: 8px;
-        font: inherit;
+        width: 100%; border: 0; background: transparent; color: var(--fg); font: inherit; padding: 0; border-radius: 0;
       }
-      input, select { height: 40px; padding: 0 12px; font-family: ui-monospace, menlo, consolas, monospace; font-size: 12px; }
-      select { font-family: ui-sans-serif, system-ui, sans-serif; }
-      textarea { min-height: 72px; padding: 10px 12px; resize: vertical; font-family: ui-sans-serif, system-ui, sans-serif; }
-      input:focus, textarea:focus, select:focus { outline: 2px solid color-mix(in srgb, var(--fg) 40%, transparent); outline-offset: 1px; }
-      .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
-      .check { display: flex; align-items: center; gap: 8px; margin-top: 14px; color: var(--muted); font-size: 13px; }
-      .check input { width: auto; height: auto; }
+      input, select { height: 28px; }
+      textarea { min-height: 64px; padding: 8px 0; resize: vertical; }
+      input:focus, textarea:focus, select:focus { outline: none; }
+      .check {
+        display: flex; align-items: center; gap: 8px; margin-top: 14px; color: var(--muted);
+        font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+      }
+      .check input { width: auto; height: auto; accent-color: var(--lime); }
       button {
-        min-height: 40px;
-        border-radius: 8px;
-        border: 0;
-        padding: 0 16px;
-        font: 600 13px/1 ui-sans-serif, system-ui, sans-serif;
-        cursor: pointer;
+        min-height: 36px; border: 0; border-radius: 4px; padding: 0 16px;
+        font: 600 11px/1 "Geist", ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer;
       }
       button:active { transform: scale(0.98); }
-      #save { background: var(--fg); color: #141416; }
-      #clear { background: transparent; color: var(--danger); padding: 0; }
-      #error { min-height: 1em; margin: 6px 0 0; color: var(--danger); font-size: 12px; }
-      #status { color: var(--muted); font-size: 12px; }
-      h2 { margin: 22px 0 8px; font-size: 13px; font-weight: 600; }
-      ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+      #save { background: var(--lime); color: var(--ink); }
+      #check-update { background: #1a1a1a; color: var(--fg); }
+      #clear { background: transparent; color: var(--bad); padding: 0; }
+      .row { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
+      #error { min-height: 1em; margin: 10px 0 0; color: var(--bad); font-size: 12px; }
+      #status { color: var(--lime); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
+      .update {
+        display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line);
+      }
+      h2 { margin: 22px 0 0; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; }
+      ul { list-style: none; margin: 8px 0 0; padding: 0; }
+      li { padding: 8px 0; border-bottom: 1px solid var(--line); }
       li strong { display: block; font-size: 13px; font-weight: 500; }
-      li span { display: block; color: var(--faint); font-size: 12px; }
-      #taste { margin-top: 8px; color: var(--muted); font-size: 12px; }
-      .hint { margin-top: 4px; color: var(--faint); font-size: 11px; }
+      li span { display: block; color: var(--faint); font-size: 12px; margin-top: 2px; }
+      #taste { margin-top: 10px; color: var(--muted); font-size: 12px; }
+      a { color: var(--lime); }
     </style>
   </head>
   <body>
     <main>
-      <h1>SuperX Copilot</h1>
-      <p>Blank key uses the on-device reply brain. Key stays in Chrome.</p>
-
-      <div id="update-box" style="margin:16px 0;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--card);">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-          <div>
-            <strong style="font-size:13px;">Updates</strong>
-            <p id="update-status" style="margin:4px 0 0;">Checking…</p>
-          </div>
-          <button id="check-update" type="button" style="background:transparent;color:var(--fg);border:1px solid var(--border);">Check</button>
+      <header>
+        <h1>API</h1>
+        <span class="k">SuperX</span>
+      </header>
+      <p>A blank key writes nothing. The key stays in Chrome.</p>
+      <div class="update">
+        <div>
+          <div class="k">Version</div>
+          <p id="update-status" style="margin:4px 0 0;">Checking…</p>
         </div>
-        <p id="update-action" style="margin:8px 0 0;" hidden></p>
+        <button id="check-update" type="button">Check</button>
       </div>
-
-      <label for="preset">Preset</label>
-      <select id="preset">
-        <option value="gemini">Gemini</option>
-        <option value="deepseek">DeepSeek</option>
-        <option value="openrouter">OpenRouter</option>
-        <option value="groq">Groq</option>
-        <option value="custom">Custom</option>
-      </select>
-      <p class="hint">Choosing a preset fills the fields. You can still edit them.</p>
-
-      <label for="baseUrl">Base URL</label>
-      <input id="baseUrl" type="text" spellcheck="false" placeholder="https://api.example.com/v1" />
-
-      <label for="model">Model</label>
-      <input id="model" type="text" spellcheck="false" placeholder="model-id" />
-
-      <label for="format">Request format</label>
-      <select id="format">
-        <option value="openai">OpenAI chat completions</option>
-        <option value="gemini">Gemini generateContent</option>
-      </select>
-
-      <label for="auth">Auth</label>
-      <select id="auth">
-        <option value="bearer">Bearer token in header</option>
-        <option value="query">Key as query param</option>
-      </select>
-
-      <label for="key">API key</label>
-      <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="Optional" />
-
+      <p id="update-action" hidden></p>
+      <div class="field">
+        <select id="preset" aria-label="Preset">
+          <option value="gemini">Gemini</option>
+          <option value="deepseek">DeepSeek</option>
+          <option value="openrouter">OpenRouter</option>
+          <option value="groq">Groq</option>
+          <option value="custom">Custom</option>
+        </select>
+        <label class="k" for="preset">Preset</label>
+      </div>
+      <div class="field">
+        <input id="baseUrl" type="text" spellcheck="false" placeholder="https://" aria-label="Base URL" />
+        <label class="k" for="baseUrl">Base URL</label>
+      </div>
+      <div class="field">
+        <input id="model" type="text" spellcheck="false" placeholder="model-id" aria-label="Model" />
+        <label class="k" for="model">Model</label>
+      </div>
+      <div class="field">
+        <select id="format" aria-label="Request format">
+          <option value="openai">OpenAI</option>
+          <option value="gemini">Gemini</option>
+        </select>
+        <label class="k" for="format">Format</label>
+      </div>
+      <div class="field">
+        <select id="auth" aria-label="Auth">
+          <option value="bearer">Bearer</option>
+          <option value="query">Query key</option>
+        </select>
+        <label class="k" for="auth">Auth</label>
+      </div>
+      <div class="field">
+        <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="Required" aria-label="API key" />
+        <label class="k" for="key">Key</label>
+      </div>
       <label class="check">
         <input id="jsonMode" type="checkbox" checked />
-        Force JSON response
+        Force JSON
       </label>
-
       <p id="error"></p>
-
-      <label for="notes">Extra voice notes</label>
-      <textarea id="notes" placeholder="Locked reply rules stay on."></textarea>
-
-      <label for="updateUrl">Update check URL (optional)</label>
-      <input id="updateUrl" type="text" spellcheck="false" placeholder="https://…/version.json" />
-      <p class="hint">JSON with { "version": "1.2.0", "url": "https://…/superx-copilot.zip" }</p>
-
+      <div class="field">
+        <textarea id="notes" placeholder="Locked rails stay on." aria-label="Voice notes"></textarea>
+        <label class="k" for="notes">Voice</label>
+      </div>
+      <div class="field">
+        <input id="updateUrl" type="text" spellcheck="false" placeholder="https://…/version.json" aria-label="Update URL" />
+        <label class="k" for="updateUrl">Update URL</label>
+      </div>
       <div class="row">
         <button id="clear" type="button">Clear taste</button>
         <button id="save" type="button">Save</button>
       </div>
       <p id="status"></p>
-
       <h2>Reply formats</h2>
-      <p>Not post formats. A reply adds one missing detail.</p>
+      <p>A reply adds one missing detail. It is not a post.</p>
       <ul id="formats"></ul>
       <div id="taste"></div>
     </main>
