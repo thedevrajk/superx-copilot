@@ -3,6 +3,7 @@ importScripts("reply-brain.js");
 const brain = globalThis.SuperXBrain;
 
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+chrome.sidePanel.setOptions({ path: "sidepanel.html", enabled: true }).catch(() => {});
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message) return;
@@ -16,8 +17,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message.type === "OPEN_POST" && sender.tab?.id) {
-    chrome.sidePanel.open({ tabId: sender.tab.id }).catch(() => {});
-    chrome.runtime.sendMessage(message).catch(() => {});
+    const tabId = sender.tab.id;
+    const payload = message.payload || {};
+    const pendingPost = { ...payload, at: Date.now() };
+    const opened = chrome.sidePanel.open({ tabId });
+    chrome.storage.session.set({ pendingPost }).catch(() => {});
+    opened
+      .then(() => {
+        setTimeout(() => {
+          chrome.runtime.sendMessage({ type: "OPEN_POST", payload: pendingPost }).catch(() => {});
+        }, 60);
+        sendResponse({ ok: true });
+      })
+      .catch(() => {
+        sendResponse({
+          ok: false,
+          error: "Click the SuperX icon in the toolbar. This post is already loaded.",
+        });
+      });
+    return true;
   }
 });
 
@@ -34,7 +52,7 @@ async function generate(payload) {
   ]);
 
   const apiKey = String(stored.apiKey || stored.geminiApiKey || "").trim();
-  if (!apiKey) throw new Error("Add an API key in SuperX settings, or draft on device.");
+  if (!apiKey) throw new Error("Add an API key in Settings. No reply is written without one.");
 
   const baseUrl = String(stored.apiBaseUrl || "https://generativelanguage.googleapis.com/v1beta").replace(/\/+$/, "");
   const model = String(stored.apiModel || "gemini-3.8-flash").trim();
@@ -64,15 +82,37 @@ async function generate(payload) {
       ? await callOpenAI({ baseUrl, model, auth, apiKey, prompt, image, jsonMode, temperature: Number(payload?.temperature) || 0.7 })
       : await callGemini({ baseUrl, model, auth, apiKey, prompt, image, jsonMode, temperature: Number(payload?.temperature) || 0.7 });
 
-  if (!raw.trim()) throw new Error("API returned nothing.");
+  if (!raw.trim()) throw new Error("The model returned nothing.");
+
+  const options = repliesFromModel(raw, ids);
+  if (!options.length) throw new Error("The model returned no usable reply. Try again.");
 
   await trackUsage(raw.length + prompt.length);
 
   return {
-    options: brain.draftsFromModel(raw, ids, read, Number(payload?.salt) || 1),
+    options,
     imageAttached: Boolean(image),
     model,
   };
+}
+
+function repliesFromModel(raw, formatIds) {
+  const parsed = brain.parseModelJson(raw);
+  const matched = [];
+  for (const id of formatIds) {
+    const format = brain.formatById(id);
+    const hit = parsed.find((item) => brain.matchFormat(item.format)?.id === id);
+    if (hit?.text) matched.push({ formatId: id, formatName: format.name, text: hit.text });
+  }
+  if (matched.length) return matched;
+  return parsed
+    .filter((item) => item.text)
+    .slice(0, 3)
+    .map((item) => ({
+      formatId: brain.matchFormat(item.format)?.id || "reply",
+      formatName: brain.matchFormat(item.format)?.name || item.format || "Reply",
+      text: item.text,
+    }));
 }
 
 async function callGemini({ baseUrl, model, auth, apiKey, prompt, image, jsonMode, temperature }) {
